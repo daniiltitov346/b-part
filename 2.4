@@ -1,0 +1,137 @@
+#include <iostream>
+
+struct MyPayload {
+    char data; 
+};
+
+struct Node {
+    MyPayload Payload; 
+    Node* pNext;      
+
+    Node(char value) {
+        Payload.data = value;
+        pNext = nullptr;
+    }
+};
+
+struct MyList {
+    Node* pHead;     
+    Node* pTail;      
+    int nNodesCnt;  
+
+    MyList() : pHead(nullptr), pTail(nullptr), nNodesCnt(0) {}
+};
+
+void append(MyList& list, char value) {
+    Node* newNode = new Node(value);
+    if (!list.pHead) {
+        list.pHead = list.pTail = newNode;
+    }
+    else {
+        list.pTail->pNext = newNode;
+        list.pTail = newNode;
+    }
+    list.nNodesCnt++; 
+}
+
+
+int getNodeCount(const MyList& list) {
+    return list.nNodesCnt; 
+}
+
+
+void replaceList(MyList& targetList, MyList& L1, MyList& L2) {
+    if (!L1.pHead || !L2.pHead) return;
+
+    Node* current = targetList.pHead;
+    Node* prev = nullptr;
+
+    while (current) {
+        Node* p1 = current;
+        Node* p2 = L1.pHead;
+
+        while (p2 && p1 && p1->Payload.data == p2->Payload.data) {
+            p1 = p1->pNext;
+            p2 = p2->pNext;
+        }
+
+    
+        if (!p2) {
+            Node* next = p1; 
+
+            for (Node* p2L2 = L2.pHead; p2L2; p2L2 = p2L2->pNext) {
+                Node* newNode = new Node(p2L2->Payload.data);
+                if (prev) {
+                    prev->pNext = newNode; 
+                }
+                else {
+                    targetList.pHead = newNode; 
+                }
+                prev = newNode;
+            }
+
+            if (prev) {
+                prev->pNext = next;
+            }
+
+            current = next; 
+        }
+        else {
+            prev = current; 
+            current = current->pNext;
+        }
+    }
+
+    if (prev) {
+        targetList.pTail = prev; 
+    }
+}
+
+void printList(const MyList& list) {
+    Node* current = list.pHead;
+    while (current) {
+        std::cout << current->Payload.data;
+        current = current->pNext;
+    }
+    std::cout << std::endl;
+}
+
+void deleteList(MyList& list) {
+    while (list.pHead) {
+        Node* temp = list.pHead;
+        list.pHead = list.pHead->pNext;
+        delete temp;
+    }
+    list.pTail = nullptr;
+    list.nNodesCnt = 0;
+}
+
+int main() {
+   
+    char arrL[] = { 'a', 'b', 'c', 'a', 'b', 'c' };
+    char arrL1[] = { 'a', 'b', 'c' };
+    char arrL2[] = { 'k', 'y' };
+
+    MyList L;
+    MyList L1;
+    MyList L2;
+
+    for (char ch : arrL) append(L, ch);
+    for (char ch : arrL1) append(L1, ch);
+    for (char ch : arrL2) append(L2, ch);
+
+    std::cout << "Original List: ";
+    printList(L);
+    std::cout << "Node Count: " << getNodeCount(L) << std::endl;
+
+    replaceList(L, L1, L2);
+
+    std::cout << "Result: ";
+    printList(L);
+   
+    deleteList(L);
+    deleteList(L1);
+    deleteList(L2);
+
+    return 0;
+}
