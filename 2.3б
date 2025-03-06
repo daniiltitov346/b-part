@@ -1,0 +1,166 @@
+#include <iostream>
+#include <cstring> 
+
+using namespace std;
+
+struct Student {
+    char fullName[100]; 
+    char birthDate[20]; 
+    int course; 
+    double averageGrade; 
+};
+
+struct Node {
+    Student data;
+    Node* next;
+
+    Node(const Student& student) : next(nullptr) {
+        strcpy_s(data.fullName, student.fullName);
+        strcpy_s(data.birthDate, student.birthDate);
+        data.course = student.course;
+        data.averageGrade = student.averageGrade;
+    }
+};
+
+class StudentList {
+private:
+    Node* head;
+
+public:
+    StudentList() : head(nullptr) {}
+
+    void addStudent(const Student& student) {
+        Node* newNode = new Node(student);
+        if (!head || strcmp(head->data.fullName, student.fullName) > 0) {
+            newNode->next = head;
+            head = newNode;
+        }
+        else {
+            Node* current = head;
+            while (current->next && strcmp(current->next->data.fullName, student.fullName) < 0) {
+                current = current->next;
+            }
+            newNode->next = current->next;
+            current->next = newNode;
+        }
+    }
+    void removeStudent(Node* node) {
+        if (!node) return;
+
+        if (node == head) {
+            head = head->next;
+            delete node;
+            return;
+        }
+
+        Node* current = head;
+        while (current->next && current->next != node) {
+            current = current->next;
+        }
+
+        if (current->next) {
+            current->next = node->next;
+            delete node;
+        }
+    }
+
+   
+    StudentList extractStudentsAboveAverage(int n) {
+        StudentList result;
+        double courseAverage = 0.0;
+        int count = 0;
+
+        Node* current = head;
+        while (current) {
+            if (current->data.course == n) {
+                courseAverage += current->data.averageGrade;
+                count++;
+            }
+            current = current->next;
+        }
+
+        if (count == 0) return result; 
+        courseAverage /= count;
+
+        current = head;
+        Node* prev = nullptr;
+        while (current) {
+            if (current->data.course == n && current->data.averageGrade > courseAverage) {
+                result.addStudent(current->data); 
+                Node* toDelete = current;
+                if (prev) {
+                    prev->next = current->next;
+                }
+                else {
+                    head = current->next;
+                }
+                current = current->next;
+                delete toDelete;
+            }
+            else {
+                prev = current;
+                current = current->next;
+            }
+        }
+
+        return result;
+    }
+
+    void printList() const {
+        Node* current = head;
+        while (current) {
+            cout << "Name: " << current->data.fullName
+                << ", Date of Birth: " << current->data.birthDate
+                << ", Course: " << current->data.course
+                << ", Average Grade: " << current->data.averageGrade << endl;
+            current = current->next;
+        }
+    }
+};
+
+Student inputStudent() {
+    Student student;
+    cout << "Enter student's full name: ";
+    cin.getline(student.fullName, 100);
+    cout << "Enter date of birth (DD.MM.YYYY): ";
+    cin.getline(student.birthDate, 20);
+    cout << "Enter course: ";
+    cin >> student.course;
+    cout << "Enter average grade: ";
+    cin >> student.averageGrade;
+    cin.ignore(); 
+    return student;
+}
+
+int main() {
+    StudentList list;
+    int numStudents;
+
+    cout << "Enter the number of students: ";
+    cin >> numStudents;
+    cin.ignore();
+
+    for (int i = 0; i < numStudents; ++i) {
+        cout << "\nEnter data for student " << i + 1 << ":" << endl;
+        Student student = inputStudent();
+        list.addStudent(student);
+    }
+
+    cout << "\nOriginal list of students:" << endl;
+    list.printList();
+
+    int courseToCheck;
+    cout << "\nEnter the course to analyze: ";
+    cin >> courseToCheck;
+
+    StudentList extractedList = list.extractStudentsAboveAverage(courseToCheck);
+    cout << "\nStudents from course " << courseToCheck << " with a grade above average:" << endl;
+    extractedList.printList();
+
+    cout << "\nOriginal list after removal:" << endl;
+    list.printList();
+
+    return 0;
+}
+
+       
