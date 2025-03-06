@@ -2,14 +2,15 @@
 using namespace std;
 
 struct Node {
-    double value; 
-    Node* prev;   
-    Node* next;   
+    double value;
+    Node* prev;
+    Node* next;
 
     Node(double val) : value(val), prev(nullptr), next(nullptr) {}
 };
+
 struct List {
-    Node* head; 
+    Node* head;
     Node* tail;
 
     List() : head(nullptr), tail(nullptr) {}
@@ -27,14 +28,18 @@ struct List {
     }
 
     double findMaxOfMinPairs(int n) {
-        Node* left = head;       
-        Node* right = tail;      
+        Node* left = head;
+        Node* right = tail;
 
-        double maxOfMin = 0; 
+        
+        double maxOfMin = min(left->value, right->value);
 
-        for (int i = 0; i < n; ++i) {
-            double minVal = min(left->value, right->value); 
-            maxOfMin = max(maxOfMin, minVal);             
+        left = left->next;
+        right = right->prev;
+
+        for (int i = 1; i < n; ++i) {
+            double minVal = min(left->value, right->value);
+            maxOfMin = max(maxOfMin, minVal);
 
             left = left->next;
             right = right->prev;
@@ -60,11 +65,11 @@ int main() {
     int size = 2 * n;
     List list;
 
-    cout << "enter" << size << " numbers: ";
+    cout << "enter " << size << " numbers: ";
     for (int i = 0; i < size; ++i) {
         double value;
         cin >> value;
-        list.append(value); 
+        list.append(value);
     }
 
     double result = list.findMaxOfMinPairs(n);
