@@ -1,0 +1,118 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+void create_f_file(const string& f_path, int count) {
+    ofstream f(f_path, ios::binary);
+    if (!f.is_open()) {
+        cerr << "Error creating file f.bin!" << endl;
+        return;
+    }
+
+    srand(time(0));
+
+    for (int i = 0; i < count; ++i) {
+        int negative_number = -(rand() % 100 + 1);
+        f.write(reinterpret_cast<char*>(&negative_number), sizeof(negative_number));
+    }
+
+    for (int i = 0; i < count; ++i) {
+        int positive_number = rand() % 100 + 1;
+        f.write(reinterpret_cast<char*>(&positive_number), sizeof(positive_number));
+    }
+
+    f.close();
+    cout << "File f.bin created with " << count * 2 << " numbers!" << endl;
+}
+
+bool read_next_number(ifstream& file, int& number) {
+    if (file.read(reinterpret_cast<char*>(&number), sizeof(number))) {
+        return true;
+    }
+    return false;
+}
+
+void write_number(ofstream& file, int number) {
+    file.write(reinterpret_cast<char*>(&number), sizeof(number));
+}
+
+void create_g_file(const string& f_path, const string& g_path) {
+    ifstream f(f_path, ios::binary);
+    ofstream g(g_path, ios::binary);
+
+    if (!f.is_open()) {
+        cerr << "Error opening file f.bin!" << endl;
+        return;
+    }
+    if (!g.is_open()) {
+        cerr << "Error creating file g.bin!" << endl;
+        f.close();
+        return;
+    }
+
+    int number;
+    int positive_count = 0;
+    int negative_count = 0;
+    const int n = 10; 
+
+    int positive[n], negative[n];
+
+    while (read_next_number(f, number)) {
+        if (number > 0) {
+            positive[positive_count++] = number;
+        }
+        else if (number < 0) {
+            negative[negative_count++] = number;
+        }
+    }
+
+    int i = 0, j = 0;
+    while (i < positive_count || j < negative_count) {
+       
+        for (int k = 0; k < 2 && i < positive_count; ++k) {
+            write_number(g, positive[i++]);
+        }
+        
+        for (int k = 0; k < 2 && j < negative_count; ++k) {
+            write_number(g, negative[j++]);
+        }
+    }
+
+    f.close();
+    g.close();
+    cout << "File g.bin is ready!" << endl;
+}
+
+void print_file(const string& file_path, const string& file_name) {
+    ifstream file(file_path, ios::binary);
+    if (!file.is_open()) {
+        cerr << "Error opening " << file_name << "!" << endl;
+        return;
+    }
+
+    cout << "Contents of " << file_name << ":" << endl;
+    int number;
+    while (file.read(reinterpret_cast<char*>(&number), sizeof(number))) {
+        cout << number << endl;
+    }
+    cout << endl;
+
+    file.close();
+}
+
+int main() {
+    const string f_path = "f.bin";
+    const string g_path = "g.bin";
+
+    create_f_file(f_path, 10);
+
+    print_file(f_path, "f.bin");
+
+    create_g_file(f_path, g_path);
+
+    print_file(g_path, "g.bin");
+
+    return 0;
+}
