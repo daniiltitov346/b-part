@@ -4,50 +4,42 @@
 #include <ctime>
 using namespace std;
 
-void create_f_file(const string& f_path, int count) {
+void create_f_file(const string& f_path, long long sets, int count_per_set) {
     ofstream f(f_path, ios::binary);
     if (!f.is_open()) {
-        cerr << "Error creating file f.bin!" << endl;
+        cerr << "Error creating file f.txt!" << endl;
         return;
     }
 
-    srand(time(0));
+    srand(static_cast<unsigned int>(time(0)));
 
-    for (int i = 0; i < count; ++i) {
-        int negative_number = -(rand() % 100 + 1);
-        f.write(reinterpret_cast<char*>(&negative_number), sizeof(negative_number));
-    }
+    for (long long i = 0; i < sets; ++i) {
 
-    for (int i = 0; i < count; ++i) {
-        int positive_number = rand() % 100 + 1;
-        f.write(reinterpret_cast<char*>(&positive_number), sizeof(positive_number));
+        for (int j = 0; j < count_per_set; ++j) {
+            int negative_number = -(rand() % 100 + 1);
+            f.write(reinterpret_cast<const char*>(&negative_number), sizeof(negative_number));
+        }
+       
+        for (int j = 0; j < count_per_set; ++j) {
+            int positive_number = rand() % 100 + 1;
+            f.write(reinterpret_cast<const char*>(&positive_number), sizeof(positive_number));
+        }
     }
 
     f.close();
-    cout << "File f.bin created with " << count * 2 << " numbers!" << endl;
+    cout << "File f.txt created with " << sets * count_per_set * 2 << " numbers!" << endl; 
 }
 
-bool read_next_number(ifstream& file, int& number) {
-    if (file.read(reinterpret_cast<char*>(&number), sizeof(number))) {
-        return true;
-    }
-    return false;
-}
-
-void write_number(ofstream& file, int number) {
-    file.write(reinterpret_cast<char*>(&number), sizeof(number));
-}
-
-void create_g_file(const string& f_path, const string& g_path) {
+void create_g_file(const string& f_path, const string& g_path, long long sets, int count_per_set) {
     ifstream f(f_path, ios::binary);
     ofstream g(g_path, ios::binary);
 
     if (!f.is_open()) {
-        cerr << "Error opening file f.bin!" << endl;
+        cerr << "Error opening file f.txt!" << endl;
         return;
     }
     if (!g.is_open()) {
-        cerr << "Error creating file g.bin!" << endl;
+        cerr << "Error creating file g.txt!" << endl;
         f.close();
         return;
     }
@@ -55,34 +47,40 @@ void create_g_file(const string& f_path, const string& g_path) {
     int number;
     int positive_count = 0;
     int negative_count = 0;
-    const int n = 10; 
 
-    int positive[n], negative[n];
+    int* positive = new int[count_per_set];
+    int* negative = new int[count_per_set];
 
-    while (read_next_number(f, number)) {
-        if (number > 0) {
-            positive[positive_count++] = number;
+    for (long long i = 0; i < sets; ++i) {
+        positive_count = 0;
+        negative_count = 0;
+
+        for (int j = 0; j < count_per_set * 2; ++j) {
+            f.read(reinterpret_cast<char*>(&number), sizeof(number));
+            if (number > 0) {
+                positive[positive_count++] = number;
+            }
+            else {
+                negative[negative_count++] = number;
+            }
         }
-        else if (number < 0) {
-            negative[negative_count++] = number;
+
+        int p_index = 0, n_index = 0;
+        while (p_index < positive_count || n_index < negative_count) {
+            for (int k = 0; k < 2 && p_index < positive_count; ++k) {
+                g.write(reinterpret_cast<const char*>(&positive[p_index++]), sizeof(positive[p_index - 1]));
+            }
+            for (int k = 0; k < 2 && n_index < negative_count; ++k) {
+                g.write(reinterpret_cast<const char*>(&negative[n_index++]), sizeof(negative[n_index - 1]));
+            }
         }
     }
 
-    int i = 0, j = 0;
-    while (i < positive_count || j < negative_count) {
-       
-        for (int k = 0; k < 2 && i < positive_count; ++k) {
-            write_number(g, positive[i++]);
-        }
-        
-        for (int k = 0; k < 2 && j < negative_count; ++k) {
-            write_number(g, negative[j++]);
-        }
-    }
+    delete[] positive;
+    delete[] negative;
 
     f.close();
     g.close();
-    cout << "File g.bin is ready!" << endl;
 }
 
 void print_file(const string& file_path, const string& file_name) {
@@ -95,24 +93,31 @@ void print_file(const string& file_path, const string& file_name) {
     cout << "Contents of " << file_name << ":" << endl;
     int number;
     while (file.read(reinterpret_cast<char*>(&number), sizeof(number))) {
-        cout << number << endl;
+        cout << number << " ";
     }
-    cout << endl;
+    cout << endl << endl;
 
     file.close();
 }
 
 int main() {
-    const string f_path = "f.bin";
-    const string g_path = "g.bin";
+    long long sets;
+    int count_per_set;
 
-    create_f_file(f_path, 10);
+    cout << "Enter the number of sets of positive and negative numbers to generate: ";
+    cin >> sets;
 
-    print_file(f_path, "f.bin");
+    cout << "Enter the number of consecutive positive and negative numbers per set: ";
+    cin >> count_per_set;
 
-    create_g_file(f_path, g_path);
+    create_f_file("f.txt", sets, count_per_set);
 
-    print_file(g_path, "g.bin");
+    print_file("f.txt", "f.txt");
+
+    create_g_file("f.txt", "g.txt", sets, count_per_set);
+    cout << "File g.txt is ready!" << endl;
+
+    print_file("g.txt", "g.txt");
 
     return 0;
 }
